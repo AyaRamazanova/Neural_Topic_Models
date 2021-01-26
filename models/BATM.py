@@ -48,14 +48,14 @@ class BATM:
         self.encoder.train()
         self.discriminator.train()
         self.id2token = {v:k for k,v in train_data.dictionary.token2id.items()}
-        data_loader = DataLoader(train_data, batch_size=batch_size,shuffle=True,num_workers=4, collate_fn=train_data.collate_fn)
+        data_loader = DataLoader(train_data, batch_size=batch_size,shuffle=True,num_workers=0, collate_fn=train_data.collate_fn)
 
         optim_G = torch.optim.Adam(self.generator.parameters(),lr=learning_rate,betas=(beta1,beta2))
         optim_E = torch.optim.Adam(self.encoder.parameters(),lr=learning_rate,betas=(beta1,beta2))
         optim_D = torch.optim.Adam(self.discriminator.parameters(),lr=learning_rate,betas=(beta1,beta2))
         Gloss_lst, Eloss_lst, Dloss_lst = [], [], []
         c_v_lst, c_w2v_lst, c_uci_lst, c_npmi_lst, mimno_tc_lst, td_lst = [], [], [], [], [], []
-        for epoch in range(num_epochs):
+        for epoch in tqdm(range(num_epochs)):
             epochloss_lst = []
             for iter, data in enumerate(data_loader):
                 txts, bows_real = data
