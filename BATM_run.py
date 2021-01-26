@@ -35,6 +35,7 @@ parser.add_argument('--dist',type=str,default='gmm_std',help='Prior distribution
 parser.add_argument('--batch_size',type=int,default=512,help='Batch size (default=512)')
 parser.add_argument('--criterion',type=str,default='cross_entropy',help='The criterion to calculate the loss, e.g cross_entropy, bce_softmax, bce_sigmoid')
 parser.add_argument('--auto_adj',action='store_true',help='To adjust the no_above ratio automatically (default:rm top 20)')
+parser.add_argument('--show_topics', type=bool, default=False, help='Whether to print topics')
 
 args = parser.parse_args()
 
@@ -54,8 +55,9 @@ def main():
     batch_size = args.batch_size
     criterion = args.criterion
     auto_adj = args.auto_adj
+    show_topics = args.show_topics
 
-    device = torch.device('cuda')
+    device = torch.device('cpu')
     docSet = DocDataset(taskname,no_below=no_below,no_above=no_above,rebuild=rebuild,use_tfidf=True)
     if auto_adj:
         no_above = docSet.topk_dfs(topk=20)
@@ -64,10 +66,20 @@ def main():
 
     n_topic = args.n_topic
     model = BATM(bow_dim=voc_size,n_topic=n_topic,device=device, taskname=taskname)
+    if bkpt_continue:
+         path = os.listdir('./ckpt')[0]
+         checkpoint = torch.load(os.path.join('./ckpt', path))
+         model.generator.load_state_dict(checkpoint['generator'])
+         model.encoder.load_state_dict(checkpoint['encoder'])
+         model.discriminator.load_state_dict(checkpoint['discriminator'])
     model.train(train_data=docSet,batch_size=batch_size,test_data=docSet,num_epochs=num_epochs,log_every=10,n_critic=10)
     model.evaluate(test_data=docSet)
     save_name = f'./ckpt/BATM_{taskname}_tp{n_topic}_{time.strftime("%Y-%m-%d-%H-%M", time.localtime())}.ckpt'
-    torch.save({'generator':model.generator.state_dict(),'encoder':model.encoder.state_dict(),'discriminator':model.discriminator.state_dict()},save_name)
+    torch.save({'generator':model.generator.state_dict(),'encoder':model.encoder.state_dict(),'discriminator':model.discriminator.state_dict()}, save_name)
+
+    if show_topics:
+        for topic in model.show_topic_words():
+            print(topic)
 
 if __name__ == "__main__":
     main()
