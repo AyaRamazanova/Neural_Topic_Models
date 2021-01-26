@@ -1,6 +1,6 @@
-torch>=1.6.0
 gensim
 tqdm
 numpy
-matplotlib
 pyhanlp
+matplotlib
+torch>=1.6.0
