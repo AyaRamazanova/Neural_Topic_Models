@@ -16,8 +16,8 @@ from pyhanlp import *
 def Tokenizer(sent, stopwords=None):
     tokens = sent.split()
     del tokens[0]
-    #tokens = list(filter(lambda token: token != '', tokens))
-    tokens = list(filter(lambda token: len(tokens) > 3, tokens))
+    tokens = list(filter(lambda token: token != '', tokens))
+    #tokens = list(filter(lambda token: len(tokens) > 3, tokens))
     if stopwords is not None:
         tokens = [t for t in tokens if not (t in stopwords)]
     return tokens
