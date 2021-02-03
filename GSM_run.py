@@ -35,6 +35,7 @@ parser.add_argument('--rebuild',type=bool,default=True,help='Whether to rebuild 
 parser.add_argument('--batch_size',type=int,default=512,help='Batch size (default=512)')
 parser.add_argument('--criterion',type=str,default='cross_entropy',help='The criterion to calculate the loss, e.g cross_entropy, bce_softmax, bce_sigmoid')
 parser.add_argument('--auto_adj',action='store_true',help='To adjust the no_above ratio automatically (default:rm top 20)')
+parser.add_argument('--show_topics', type=bool, default=False, help='Whether to print topics')
 
 args = parser.parse_args()
 
@@ -53,8 +54,9 @@ def main():
     criterion = args.criterion
     n_topic = args.n_topic
     auto_adj = args.auto_adj
+    show_topics = args.show_topics
 
-    device = torch.device('cuda')
+    device = torch.device('cpu')
     docSet = DocDataset(taskname,no_below=no_below,no_above=no_above,rebuild=rebuild,use_tfidf=False)
     if auto_adj:
         no_above = docSet.topk_dfs(topk=20)
@@ -62,11 +64,22 @@ def main():
     
     voc_size = docSet.vocabsize
     print('voc size:',voc_size)
-    model = GSM(bow_dim=voc_size,n_topic=n_topic,taskname=taskname,device=device) 
+    model = GSM(bow_dim=voc_size,n_topic=n_topic,taskname=taskname,device=device)
+    if bkpt_continue:
+        path = os.listdir('./ckpt')[0]
+        checkpoint = torch.load(os.path.join('./ckpt', path))
+        model.vae.load_state_dict(checkpoint)
     model.train(train_data=docSet,batch_size=batch_size,test_data=docSet,num_epochs=num_epochs,log_every=10,beta=1.0,criterion=criterion)
     model.evaluate(test_data=docSet)
+
+    if show_topics:
+        with open(f'./result/{taskname}_ep{num_epochs}.txt', 'w') as f:
+            for topic in model.show_topic_words():
+                print(topic, file=f)
+
     save_name = f'./ckpt/GSM_{taskname}_tp{n_topic}_{time.strftime("%Y-%m-%d-%H-%M", time.localtime())}.ckpt'
     torch.save(model.vae.state_dict(),save_name)
+
 
 if __name__ == "__main__":
     main()
