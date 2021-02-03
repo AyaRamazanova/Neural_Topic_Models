@@ -30,7 +30,7 @@ class GSM:
     def train(self,train_data,batch_size=256,learning_rate=1e-3,test_data=None,num_epochs=100,is_evaluate=False,log_every=5,beta=1.0,criterion='cross_entropy'):
         self.vae.train()
         self.id2token = {v:k for k,v in train_data.dictionary.token2id.items()}
-        data_loader = DataLoader(train_data,batch_size=batch_size,shuffle=True,num_workers=4,collate_fn=train_data.collate_fn)
+        data_loader = DataLoader(train_data,batch_size=batch_size,shuffle=True,num_workers=0,collate_fn=train_data.collate_fn)
 
         optimizer = torch.optim.Adam(self.vae.parameters(),lr=learning_rate)
         #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
